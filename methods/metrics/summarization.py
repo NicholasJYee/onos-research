@@ -57,6 +57,7 @@ def calculate_summarization_metric(
         Dictionary with evaluation results:
         {
             'scores': List[float],   # Individual scores for each example
+            'reasons': List[str],     # Reasoning for each example
             'summary': {
                 'mean': float,       # Mean score
                 'median': float,     # Median score
@@ -83,6 +84,7 @@ def calculate_summarization_metric(
         assessment_questions=assessment_questions
     )
     scores = []
+    reasons = []
     
     for pred, ref in zip(predictions, references):
         # Create test case: input=ground truth, actual_output=predictions
@@ -96,6 +98,8 @@ def calculate_summarization_metric(
         
         score = metric.score
         scores.append(score)
+        reason = metric.reason
+        reasons.append(reason)
     
     # Calculate summary statistics
     mean_score = statistics.mean(scores)
@@ -108,6 +112,7 @@ def calculate_summarization_metric(
     
     return {
         'scores': scores,
+        'reasons': reasons,
         'summary': {
             'mean': mean_score,
             'median': median_score,

@@ -19,6 +19,8 @@ questions:
   - "Does the summary include the patient's social history?"
   - "Does the summary include the physical exam findings?"
   - "Does the summary include the imaging findings?"
-  - "Does the summary include the assessment (age, sex, diagnosis)?"
+  - "Does the summary include the diagnosis?"
   - "Does the summary include the plan or next steps?"
-
+  - "Does the patient have a follow-up appointment?"
+  - "Will the patient be booked for a surgery?"
+  - "Will the patient require imaging?"
