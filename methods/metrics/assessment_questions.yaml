@@ -1,0 +1,24 @@
+name: assessment_questions
+version: 1.0.0
+description: |
+  Assessment questions for DeepEval SummarizationMetric.
+  IMPORTANT: All questions must be closed-ended (yes/no) questions that can be answered with either 'yes' or 'no'.
+  These questions are used to calculate the coverage_score by comparing answers from the original text and summary.
+questions:
+  - "Does the summary include the patient's name?"
+  - "Does the summary include the patient's age?"
+  - "Does the summary include the patient's sex?"
+  - "Does the summary include the mechanism of injury?"
+  - "Does the summary include the date of injury?"
+  - "Does the summary include the patient's symptoms?"
+  - "Does the summary include information about the patient's pain?"
+  - "Does the summary include the patient's medical problems?"
+  - "Does the summary include the patient's surgical history?"
+  - "Does the summary include the patient's current medications?"
+  - "Does the summary include the patient's allergies?"
+  - "Does the summary include the patient's social history?"
+  - "Does the summary include the physical exam findings?"
+  - "Does the summary include the imaging findings?"
+  - "Does the summary include the assessment (age, sex, diagnosis)?"
+  - "Does the summary include the plan or next steps?"
+
