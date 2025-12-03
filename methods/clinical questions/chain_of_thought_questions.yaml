@@ -1,0 +1,19 @@
+name: clinical_questions
+version: 1.0.0
+questions:
+  - "What is the patient's name?"
+  - "What is the patient's age?"
+  - "What is the patient's sex?"
+  - "What is the mechanism of injury?"
+  - "What is the date of injury?"
+  - "What are their symptoms?"
+  - "How is their pain?"
+  - "What medical problems do they have?"
+  - "What surgeries have they had?"
+  - "What medications do they take?"
+  - "What allergies do they have?"
+  - "What is their social history?"
+  - "What were the physical exam findings?"
+  - "What were the imaging findings?"
+  - "What is the assessment (summary of their age, sex, diagnosis)?"
+  - "What is the plan / next steps?"
