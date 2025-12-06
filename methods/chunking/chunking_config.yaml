@@ -5,6 +5,16 @@ chunk_size: 600
 overlap: 0
 
 update_instruction: |
-  Update the existing clinic note below with information from the new conversation chunk. 
-  Merge new information into the existing note structure, adding new sections or details as needed. 
-  Maintain the note format and structure while incorporating the new information.
+  Refine and improve the existing clinic note below by incorporating information from the new conversation chunk.
+  
+  Important guidelines:
+  - Add new information to the appropriate sections of the note
+  - Preserve all existing information in the note unless it is explicitly contradicted or corrected in the new chunk
+  - Do not remove or replace existing content unless the new chunk indicates it is incorrect
+  - Expand sections with additional details when new information is available
+  - Build up the note progressively (for example, if the note only has a Patinet Information section, add other sections (HPI, ROS, PMHx, etc.) as they appear in conversation chunks)
+  - Each chunk should improve the note with its specific information while maintaining the complete note structure
+  - Maintain the clinical note format and structure throughout
+  - Do not include any commentary, explanations, or meta-text about what was added or updated (e.g., do not say "Updated:", "Added:", "New information:", etc.)
+  - Simply update the note silently: if new information is available, incorporate it; if a section has no new information, leave it unchanged
+  - Output only the refined clinic note itself, with no additional commentary
