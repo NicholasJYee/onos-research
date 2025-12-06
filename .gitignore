@@ -2,3 +2,7 @@
 env/
 data/
 outputs/
+.env.local
+.deepeval/
+hf_*
+*__pycache__

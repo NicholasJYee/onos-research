@@ -77,13 +77,13 @@ def run_baseline_experiment(
     models = [
         'gemma3:27b',
         'qwen3:32b',
-        # 'llama3.1:8b',
-        # 'mistral-small3.1:24b',
-        # 'qwen2.5:3b',
-        # 'llama3.2:3b',
-        # 'deepseek-r1:32b',
-        # 'deepseek-r1:7b',
-        # 'gemma3:4b'
+        'llama3.1:8b',
+        'mistral-small3.1:24b',
+        'qwen2.5:3b',
+        'llama3.2:3b',
+        'deepseek-r1:32b',
+        'deepseek-r1:7b',
+        'gemma3:4b'
     ]
     
     # Setup paths
@@ -117,7 +117,15 @@ def run_baseline_experiment(
     
     print(f"Found {len(df)} transcripts in Excel file")
     
-    # Process each row
+    # Create model directories upfront
+    model_dirs = {}
+    for model in models:
+        model_dir = output_dir / model.replace(':', '_')
+        model_dir.mkdir(exist_ok=True)
+        model_dirs[model] = model_dir
+    
+    # Initialize results structure
+    results_file = output_dir / "results.json"
     results = {
         'experiment_info': {
             'name': prompt_name,
@@ -128,6 +136,10 @@ def run_baseline_experiment(
         },
         'results': []
     }
+    
+    # Save initial results file
+    with open(results_file, 'w', encoding='utf-8') as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
     
     for idx, row in df.iterrows():
         transcript_file = row.get('transcription_file', '')
@@ -158,6 +170,9 @@ def run_baseline_experiment(
             'models': {}
         }
         
+        # Add row_result to results before processing models
+        results['results'].append(row_result)
+        
         for model in models:
             print(f"  Generating with {model}...")
             result = generate_medical_note(prompt_template, transcript, model)
@@ -167,34 +182,22 @@ def run_baseline_experiment(
                 print(f"    Error: {result['error']}")
             else:
                 print(f"    Generated note ({len(result['note'])} chars) in {result['duration_seconds']:.2f}s")
-        
-        results['results'].append(row_result)
-    
-    # Save results
-    results_file = output_dir / "results.json"
-    with open(results_file, 'w', encoding='utf-8') as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
+                
+                # Save individual note file immediately
+                transcript_name = Path(transcript_file).stem
+                note_file = model_dirs[model] / f"{transcript_name}.txt"
+                with open(note_file, 'w', encoding='utf-8') as f:
+                    f.write(result['note'])
+                print(f"    Saved note to {note_file}")
+            
+            # Update and save results.json after each note
+            with open(results_file, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
     
     print(f"\n=== Experiment Complete ===")
     print(f"Results saved to: {results_file}")
     print(f"Processed {len(results['results'])} transcripts")
     print(f"Models used: {', '.join(models)}")
-    
-    # Save individual notes per model
-    for model in models:
-        model_dir = output_dir / model.replace(':', '_')
-        model_dir.mkdir(exist_ok=True)
-        
-        for result in results['results']:
-            if model in result['models']:
-                note = result['models'][model]['note']
-                if note:
-                    # Save note to file
-                    transcript_name = Path(result['transcription_file']).stem
-                    note_file = model_dir / f"{transcript_name}.txt"
-                    with open(note_file, 'w', encoding='utf-8') as f:
-                        f.write(note)
-    
     print(f"\nIndividual notes saved to: {output_dir}/<model>/")
     
     return results

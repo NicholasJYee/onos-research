@@ -10,9 +10,6 @@ Using ROUGE metrics:
 - ROUGE-1: Overlap of unigrams (each word)
 - ROUGE-2: Overlap of bigrams
 - ROUGE-L: Longest Common Subsequence (LCS) based statistics
-- ROUGE-W: Weighted LCS-based statistics that favors consecutive LCSes
-- ROUGE-S: Skip-bigram based co-occurrence statistics on any pair of words in their sentence order.
-- ROUGE-SU: Skip-bigram plus unigram-based co-occurrence statistics
 """
 
 from typing import List, Dict, Any
@@ -28,7 +25,7 @@ def calculate_rouge(
     Calculate ROUGE scores for predictions against references.
     
     Uses the rouge-score package (https://pypi.org/project/rouge-score/).
-    Computes all 6 ROUGE metrics: rouge1, rouge2, rougeL, rougeW, rougeS, rougeSU.
+    Computes ROUGE metrics: rouge1, rouge2, rougeL.
     
     Args:
         predictions: List of generated medical notes
@@ -41,10 +38,7 @@ def calculate_rouge(
                 {
                     'rouge1': {'precision': float, 'recall': float, 'fmeasure': float},
                     'rouge2': {...},
-                    'rougeL': {...},
-                    'rougeW': {...},
-                    'rougeS': {...},
-                    'rougeSU': {...}
+                    'rougeL': {...}
                 },
                 ...
             ],
@@ -54,7 +48,7 @@ def calculate_rouge(
                     'recall': {...},
                     'fmeasure': {...}
                 },
-                ... (same for rouge2, rougeL, rougeW, rougeS, rougeSU)
+                ... (same for rouge2, rougeL)
             }
         }
     
@@ -69,7 +63,7 @@ def calculate_rouge(
         ]
         result = calculate_rouge(predictions, references)
     """
-    rouge_types = ['rouge1', 'rouge2', 'rougeL', 'rougeW', 'rougeS', 'rougeSU']
+    rouge_types = ['rouge1', 'rouge2', 'rougeL']
     
     if len(predictions) != len(references):
         raise ValueError(f"Predictions ({len(predictions)}) and references ({len(references)}) must have the same length")
@@ -100,33 +94,36 @@ def calculate_rouge(
             }
         individual_scores.append(pair_scores)
     
-    # Calculate summary statistics for each metric
-    def calculate_stats(values: List[float]) -> Dict[str, float]:
-        mean = statistics.mean(values)
-        median = statistics.median(values)
-        sd = statistics.stdev(values) if len(values) > 1 else 0.0
+    # Calculate summary statistics for each metric (only if more than 1 entry)
+    if len(predictions) > 1:
+        def calculate_stats(values: List[float]) -> Dict[str, float]:
+            mean = statistics.mean(values)
+            median = statistics.median(values)
+            sd = statistics.stdev(values) if len(values) > 1 else 0.0
+            
+            # Calculate percentiles using quantiles (handles sorting internally)
+            quantiles = statistics.quantiles(values, n=4)  # Returns [p25, p50, p75]
+            p25 = quantiles[0]
+            p75 = quantiles[2]
+            
+            return {
+                'mean': mean,
+                'median': median,
+                'sd': sd,
+                'p25': p25,
+                'p75': p75
+            }
         
-        # Calculate percentiles using quantiles (handles sorting internally)
-        quantiles = statistics.quantiles(values, n=4)  # Returns [p25, p50, p75]
-        p25 = quantiles[0]
-        p75 = quantiles[2]
-        
-        return {
-            'mean': mean,
-            'median': median,
-            'sd': sd,
-            'p25': p25,
-            'p75': p75
-        }
-    
-    # Build summary statistics
-    summary = {}
-    for rouge_type in rouge_types:
-        summary[rouge_type] = {
-            'precision': calculate_stats(all_scores[rouge_type]['precision']),
-            'recall': calculate_stats(all_scores[rouge_type]['recall']),
-            'fmeasure': calculate_stats(all_scores[rouge_type]['fmeasure'])
-        }
+        # Build summary statistics
+        summary = {}
+        for rouge_type in rouge_types:
+            summary[rouge_type] = {
+                'precision': calculate_stats(all_scores[rouge_type]['precision']),
+                'recall': calculate_stats(all_scores[rouge_type]['recall']),
+                'fmeasure': calculate_stats(all_scores[rouge_type]['fmeasure'])
+            }
+    else:
+        summary = None
     
     return {
         'scores': individual_scores,

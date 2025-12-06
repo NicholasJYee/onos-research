@@ -114,30 +114,33 @@ def calculate_bertscore(
         recalls.append(recall)
         f1s.append(f1)
     
-    # Calculate summary statistics for each metric
-    def calculate_stats(values: List[float]) -> Dict[str, float]:
-        mean = statistics.mean(values)
-        median = statistics.median(values)
-        sd = statistics.stdev(values)
+    # Calculate summary statistics for each metric (only if more than 1 entry)
+    if len(predictions) > 1:
+        def calculate_stats(values: List[float]) -> Dict[str, float]:
+            mean = statistics.mean(values)
+            median = statistics.median(values)
+            sd = statistics.stdev(values)
+            
+            # Calculate percentiles using quantiles (handles sorting internally)
+            quantiles = statistics.quantiles(values, n=4)  # Returns [p25, p50, p75]
+            p25 = quantiles[0]
+            p75 = quantiles[2]
+            
+            return {
+                'mean': mean,
+                'median': median,
+                'sd': sd,
+                'p25': p25,
+                'p75': p75
+            }
         
-        # Calculate percentiles using quantiles (handles sorting internally)
-        quantiles = statistics.quantiles(values, n=4)  # Returns [p25, p50, p75]
-        p25 = quantiles[0]
-        p75 = quantiles[2]
-        
-        return {
-            'mean': mean,
-            'median': median,
-            'sd': sd,
-            'p25': p25,
-            'p75': p75
+        summary = {
+            'precision': calculate_stats(precisions),
+            'recall': calculate_stats(recalls),
+            'f1': calculate_stats(f1s)
         }
-    
-    summary = {
-        'precision': calculate_stats(precisions),
-        'recall': calculate_stats(recalls),
-        'f1': calculate_stats(f1s)
-    }
+    else:
+        summary = None
     
     return {
         'scores': scores,

@@ -11,28 +11,10 @@ from typing import List, Dict, Optional, Any
 from pathlib import Path
 import yaml
 import statistics
+import os
 from deepeval.metrics import SummarizationMetric
 from deepeval.test_case import LLMTestCase
-
-
-def load_assessment_questions(filepath: Optional[str] = None) -> List[str]:
-    """
-    Load assessment questions from YAML file.
-    
-    Args:
-        filepath: Path to assessment questions YAML file.
-                  Defaults to methods/metrics/assessment_questions.yaml
-    
-    Returns:
-        List of assessment questions
-    """
-    if filepath is None:
-        filepath = Path(__file__).parent / "assessment_questions.yaml"
-    
-    with open(filepath, 'r') as f:
-        config = yaml.safe_load(f)
-    
-    return config['questions']
+from deepeval.models import OllamaModel
 
 
 def calculate_summarization_metric(
@@ -58,6 +40,10 @@ def calculate_summarization_metric(
         {
             'scores': List[float],   # Individual scores for each example
             'reasons': List[str],     # Reasoning for each example
+            'assessment_questions': {
+                'name': str,         # Name from assessment_questions.yaml
+                'version': str       # Version from assessment_questions.yaml
+            },
             'summary': {
                 'mean': float,       # Mean score
                 'median': float,     # Median score
@@ -75,13 +61,34 @@ def calculate_summarization_metric(
     if len(predictions) != len(references):
         raise ValueError(f"Predictions ({len(predictions)}) and references ({len(references)}) must have the same length")
     
-    # Load assessment questions from YAML
-    assessment_questions = load_assessment_questions(assessment_questions_file)
+    # Load assessment questions config from YAML
+    if assessment_questions_file is None:
+        assessment_questions_path = Path(__file__).parent / "assessment_questions.yaml" 
+    else:
+        assessment_questions_path = Path(assessment_questions_file)
     
-    # Initialize metric with assessment questions
+    with open(assessment_questions_path, 'r') as f:
+        assessment_config = yaml.safe_load(f)
+    
+    assessment_questions = assessment_config['questions']
+    assessment_name = assessment_config['name']
+    assessment_version = assessment_config['version']
+    
+    # Set DeepEval timeout
+    if 'DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE' not in os.environ:
+        os.environ['DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE'] = '600'  # 10 minutes timeout
+    
+    # Create OllamaModel instance (designed specifically for Ollama)
+    ollama_model = OllamaModel(
+        model='gpt-oss:20b',
+        base_url='http://localhost:11434/'
+    )
+    
+    # Initialize metric with assessment questions and Ollama model
     metric = SummarizationMetric(
         threshold=threshold,
-        assessment_questions=assessment_questions
+        assessment_questions=assessment_questions,
+        model=ollama_model
     )
     scores = []
     reasons = []
@@ -101,23 +108,38 @@ def calculate_summarization_metric(
         reason = metric.reason
         reasons.append(reason)
     
-    # Calculate summary statistics
-    mean_score = statistics.mean(scores)
-    median_score = statistics.median(scores)
-    quantiles = statistics.quantiles(scores, n=4)  # Returns [p25, p50, p75]
-    p25 = quantiles[0]
-    p75 = quantiles[2]
-    pass_rate = sum(1 for s in scores if s >= threshold) / len(scores)
-
-    
-    return {
-        'scores': scores,
-        'reasons': reasons,
-        'summary': {
+    # Calculate summary statistics (only if more than 1 entry)
+    if len(predictions) > 1:
+        mean_score = statistics.mean(scores)
+        median_score = statistics.median(scores)
+        quantiles = statistics.quantiles(scores, n=4)  # Returns [p25, p50, p75]
+        p25 = quantiles[0]
+        p75 = quantiles[2]
+        pass_rate = sum(1 for s in scores if s >= threshold) / len(scores)
+        
+        summary = {
             'mean': mean_score,
             'median': median_score,
             'p25': p25,
             'p75': p75,
             'pass_rate': pass_rate
         }
+    else:
+        summary = None
+    
+    return {
+        'scores': scores,
+        'reasons': reasons,
+        'assessment_questions': {
+            'name': assessment_name,
+            'version': assessment_version
+        },
+        'summary': summary
     }
+
+
+if __name__ == "__main__":
+    predictions = ["Patient has ankle fracture."]
+    references = ["Patient presents with ankle fracture."]
+    results = calculate_summarization_metric(predictions, references)
+    print(results)
