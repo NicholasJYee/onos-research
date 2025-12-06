@@ -76,7 +76,7 @@ def calculate_summarization_metric(
     
     # Set DeepEval timeout
     if 'DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE' not in os.environ:
-        os.environ['DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE'] = '600'  # 10 minutes timeout
+        os.environ['DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE'] = '1200'  # 20 minutes timeout
     
     # Create OllamaModel instance (designed specifically for Ollama)
     ollama_model = OllamaModel(
