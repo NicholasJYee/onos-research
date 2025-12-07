@@ -1,5 +1,5 @@
 name: chunking_config
-version: 1.0.0
+version: 1.0.1
 
 chunk_size: 600
 overlap: 0
@@ -16,5 +16,8 @@ update_instruction: |
   - Each chunk should improve the note with its specific information while maintaining the complete note structure
   - Maintain the clinical note format and structure throughout
   - Do not include any commentary, explanations, or meta-text about what was added or updated (e.g., do not say "Updated:", "Added:", "New information:", etc.)
-  - Simply update the note silently: if new information is available, incorporate it; if a section has no new information, leave it unchanged
-  - Output only the refined clinic note itself, with no additional commentary
+  - If the new chunk contains no new information relevant to the note, output the previous note unchanged - do not write that no changes were made, just output the note as-is
+  - If new information is available, incorporate it into the appropriate sections; if a section has no new information, leave it unchanged
+  - Do not create an "Additional Information" section or similar - integrate all new information into the appropriate existing sections (HPI, ROS, PMHx, PLAN, etc.)
+  - Output only the complete, final clinic note itself - it should be good enough to stand as the final note with no additional commentary or explanations
+  
