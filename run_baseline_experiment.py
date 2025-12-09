@@ -28,19 +28,25 @@ def load_transcript(filepath: str) -> str:
         return f.read().strip()
 
 
-def generate_medical_note(prompt_template: str, transcript: str, model: str) -> Dict[str, Any]:
+def generate_medical_note(system_prompt: str, transcript: str, model: str, input_type: str) -> Dict[str, Any]:
     """
     Generate medical note using Ollama LLM.
     
     Args:
-        prompt_template: The prompt template
+        system_prompt: The system prompt
         transcript: The doctor-patient conversation transcript
         model: Ollama model to use
+        input_type: The type of input "conversation" or "reasoning")
     
     Returns:
         Dictionary with generated note and timing information
     """
-    full_prompt = f"{prompt_template}\n\nConversation:\n{transcript}"
+    if input_type.lower() == "conversation":
+        full_prompt = f"{system_prompt}\n\nConversation:\n{transcript}"
+    elif input_type.lower() == "reasoning":
+        full_prompt = f"{system_prompt}\n\nReasoning (in JSON format):\n{transcript}"
+    else:
+        raise ValueError(f"Invalid input type: {input_type}")
     
     start_time = time.time()
     try:
@@ -101,7 +107,7 @@ def run_baseline_experiment(
     # Load prompt template
     print("Loading prompt template...")
     prompt_config = load_prompt_template(str(prompt_path))
-    prompt_template = prompt_config['prompt']
+    system_prompt = prompt_config['system_prompt'].format(input_type="patient interview transcript")
     prompt_name = prompt_config['name']
     prompt_version = prompt_config['version']
     
@@ -175,7 +181,7 @@ def run_baseline_experiment(
         
         for model in models:
             print(f"  Generating with {model}...")
-            result = generate_medical_note(prompt_template, transcript, model)
+            result = generate_medical_note(system_prompt, transcript, model, input_type="conversation")
             row_result['models'][model] = result
             
             if result['error']:
