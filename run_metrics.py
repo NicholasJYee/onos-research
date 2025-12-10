@@ -122,7 +122,11 @@ def run_metrics(
         notes_by_model = {}
         for model in models:
             model_dir_name = model.replace(':', '_')
-            note_file = output_dir / model_dir_name / f"{file_name}.txt"
+            # If output folder is reasoning, notes are in a "notes" subdirectory
+            if "reasoning" in str(output_dir):
+                note_file = output_dir / model_dir_name / "notes" / f"{file_name}.txt"
+            else:
+                note_file = output_dir / model_dir_name / f"{file_name}.txt"
             
             if note_file.exists():
                 note = load_note(str(note_file))
@@ -236,7 +240,7 @@ def run_metrics(
 
 
 if __name__ == "__main__":
-    output_folder = "outputs/baseline/20251203_195311"
+    output_folder = "outputs/reasoning/20251209_112109"
     
     run_metrics(output_folder)
 
