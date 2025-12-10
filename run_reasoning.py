@@ -41,7 +41,7 @@ def extract_answer_json(text: str) -> str:
     except (json.JSONDecodeError, ValueError):
         # If not valid JSON, raise error and print the text
         print(f"ERROR: Text is not valid JSON:\n{text}")
-        raise ValueError(f"Text is not valid JSON. Received:\n{text}")
+        return None
 
 
 def generate_reasoning_json(system_prompt: str, transcript: str, model: str) -> Dict[str, Any]:
@@ -221,15 +221,10 @@ def run_reasoning_stage(
             transcript_name = Path(transcript_file).stem
             reasoning_file = model_dirs[model]["reasoning"] / f"{transcript_name}.json"
             
-            # Check if reasoning result already exists in results.json
-            if model in row_result["models"] and "reasoning" in row_result["models"][model]:
-                existing_reasoning_error = row_result["models"][model]["reasoning"]["error"]
-                # Regenerate if there was an error
-                if existing_reasoning_error is not None:
-                    print(f"  Existing reasoning for {model} had an error; regenerating...")
-                else:
-                    print(f"  Reasoning result already exists for {model}, skipping...")
-                    continue
+            # Skip if reasoning file already exists
+            if reasoning_file.exists():
+                print(f"  Reasoning JSON already exists for {model}, skipping...")
+                continue
             
             print(f"  Generating reasoning JSON with {model}...")
             reasoning_result = generate_reasoning_json(reasoning_system_prompt, transcript, model)
@@ -283,6 +278,16 @@ def generate_notes_from_reasoning(
         note_path = Path(__file__).parent / note_path
     note_config = load_prompt_template(str(note_path))
     note_system_prompt = note_config["system_prompt"].format(input_type="reasoning JSON")
+    note_name = note_config.get("name")
+    note_version = note_config.get("version")
+
+    # Persist baseline prompt metadata for traceability
+    results["experiment_info"]["note_prompt"] = {
+        "name": note_name,
+        "version": note_version,
+    }
+    with open(results_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
 
     for row in results["results"]:
         transcript_file = row.get("transcription_file", "")
@@ -293,6 +298,13 @@ def generate_notes_from_reasoning(
             if not model_data or model_data["reasoning"]["error"]:
                 raise ValueError(f"Error generating reasoning JSON for {transcript_file} with {model}")
 
+            # Skip note generation if note file already exists
+            notes_dir = output_dir / model.replace(":", "_") / "notes"
+            note_file = notes_dir / f"{transcript_name}.txt"
+            if note_file.exists():
+                print(f"  Note file already exists for {model}, skipping...")
+                continue
+            
             # Load JSON from saved file instead of results.json
             reasoning_dir = output_dir / model.replace(":", "_") / "reasoning"
             reasoning_file = reasoning_dir / f"{transcript_name}.json"
@@ -303,7 +315,6 @@ def generate_notes_from_reasoning(
                 print(f"  Error: Reasoning JSON file not found: {reasoning_file}")
                 continue
 
-            notes_dir = output_dir / model.replace(":", "_") / "notes"
             notes_dir.mkdir(parents=True, exist_ok=True)
 
             print(f"Generating clinic note from reasoning JSON with {model} for {transcript_file}...")
