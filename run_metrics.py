@@ -240,7 +240,7 @@ def run_metrics(
 
 
 if __name__ == "__main__":
-    output_folder = "outputs/reasoning/20251209_112109"
+    output_folder = "outputs/chunking/20251207_130615"
     
     run_metrics(output_folder)
 

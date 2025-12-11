@@ -15,13 +15,16 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     with open(json_path, "r") as f:
         data = json.load(f)
 
-    experiment_name = data["experiment_info"]["name"]
-    experiment_version = data["experiment_info"].get("version", "")
+    if sheet_name == "chunking":
+        experiment_version = data["experiment_info"].get("chunking_config_version", "")
+    else:
+        experiment_version = data["experiment_info"].get("version", "")
     experiment_timestamp = data["experiment_info"].get("timestamp", "")
 
     assessment = data["experiment_info"].get("assessment_questions", {})
     assessment_name = assessment.get("name", "")
     assessment_version = assessment.get("version", "")
+    
 
     # Get all expected models from experiment_info
     all_models = data["experiment_info"].get("models", [])
@@ -32,7 +35,7 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     # Prepare output path (same folder as JSON)
     # ---------------------------------------------------------
     folder = os.path.dirname(os.path.abspath(json_path))
-    output_filename = f"{experiment_name}_v{experiment_version}_metrics.xlsx"
+    output_filename = f"{sheet_name}_metrics.xlsx"
     output_path = os.path.join(folder, output_filename)
 
     # ---------------------------------------------------------
@@ -64,7 +67,7 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     # ---------------------------------------------------------
     def append_metric_row(transcript_key, file_name, metric_name, model, value):
         ws.append([
-            experiment_name,
+            sheet_name,
             experiment_version,
             experiment_timestamp,
             assessment_name,
@@ -147,10 +150,15 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     print(f"Excel saved to: {output_path}")
 
 
-# ---------------------------------------------------------
-# Example usage
-# ---------------------------------------------------------
-json_to_long_excel(
-    json_path="outputs/baseline/20251203_195311/metrics.json",
-    sheet_name="baseline"
-)
+
+if __name__ == "__main__":
+
+    # output_folder = "outputs/baseline/20251203_195311" # Baseline
+    # output_folder = "outputs/chunking/20251207_130615" # Chunking
+    output_folder = "outputs/reasoning/20251209_112109" # Reasoning
+    # output_folder = "" # Chunking + Reasoning
+    
+    json_to_long_excel(
+        json_path=f"{output_folder}/metrics.json",
+        sheet_name=output_folder.split("/")[-2]
+    )
