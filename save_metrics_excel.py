@@ -15,19 +15,35 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     with open(json_path, "r") as f:
         data = json.load(f)
 
-    if sheet_name == "chunking":
-        experiment_version = data["experiment_info"].get("chunking_config_version", "")
-    else:
-        experiment_version = data["experiment_info"].get("version", "")
-    experiment_timestamp = data["experiment_info"].get("timestamp", "")
+    # ---------------------------------------------------------
+    # Extract experiment_info - all prompts (name and version)
+    # ---------------------------------------------------------
+    experiment_info = data.get("experiment_info", {})
+    
+    # Note prompt
+    note_prompt_data = experiment_info.get("note_prompt", {})
+    note_prompt_name = note_prompt_data.get("name", "")
+    note_prompt_version = note_prompt_data.get("version", "")
+    
+    # Chunking prompt
+    chunking_prompt_data = experiment_info.get("chunking_prompt", {})
+    chunking_prompt_name = chunking_prompt_data.get("name", "")
+    chunking_prompt_version = chunking_prompt_data.get("version", "")
+    
+    # Reasoning prompt
+    reasoning_prompt_data = experiment_info.get("reasoning_prompt", {})
+    reasoning_prompt_name = reasoning_prompt_data.get("name", "")
+    reasoning_prompt_version = reasoning_prompt_data.get("version", "")
+    
+    experiment_timestamp = experiment_info.get("timestamp", "")
 
-    assessment = data["experiment_info"].get("assessment_questions", {})
+    assessment = experiment_info.get("assessment_questions", {})
     assessment_name = assessment.get("name", "")
     assessment_version = assessment.get("version", "")
     
 
     # Get all expected models from experiment_info
-    all_models = data["experiment_info"].get("models", [])
+    all_models = experiment_info.get("models", [])
     
     transcripts = data["transcripts"]
 
@@ -50,7 +66,12 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     # ---------------------------------------------------------
     header = [
         "experiment_name",
-        "experiment_version",
+        "note_prompt_name",
+        "note_prompt_version",
+        "chunking_prompt_name",
+        "chunking_prompt_version",
+        "reasoning_prompt_name",
+        "reasoning_prompt_version",
         "experiment_timestamp",
         "assessment_name",
         "assessment_version",
@@ -62,13 +83,19 @@ def json_to_long_excel(json_path, sheet_name="baseline"):
     ]
     ws.append(header)
 
+
     # ---------------------------------------------------------
     # Helper to append a metric row
     # ---------------------------------------------------------
     def append_metric_row(transcript_key, file_name, metric_name, model, value):
         ws.append([
             sheet_name,
-            experiment_version,
+            note_prompt_name,
+            note_prompt_version,
+            chunking_prompt_name,
+            chunking_prompt_version,
+            reasoning_prompt_name,
+            reasoning_prompt_version,
             experiment_timestamp,
             assessment_name,
             assessment_version,

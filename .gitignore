@@ -8,3 +8,4 @@ hf_*
 *__pycache__
 API_KEYS.yaml
 data_analysis.ipynb
+experiments/

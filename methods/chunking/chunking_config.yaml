@@ -1,11 +1,11 @@
-name: chunking_config
-version: 1.0.1
+name: chunking
+version: 1.0.0
 
 chunk_size: 600
 overlap: 0
 
-update_instruction: |
-  Refine and improve the existing clinic note below by incorporating information from the new conversation chunk.
+update_note_instructions: |
+  Refine and improve the existing clinic note below by incorporating information from the {chunk_type}.
   
   Important guidelines:
   - Add new information to the appropriate sections of the note
@@ -21,3 +21,13 @@ update_instruction: |
   - Do not create an "Additional Information" section or similar - integrate all new information into the appropriate existing sections (HPI, ROS, PMHx, PLAN, etc.)
   - Output only the complete, final clinic note itself - it should be good enough to stand as the final note with no additional commentary or explanations
   
+update_reasoning_instructions: |
+  Update the existing reasoning JSON below by incorporating information from the new conversation chunk.
+  Important guidelines:
+  - Add new information to the appropriate fields in the JSON
+  - Preserve all existing information unless it is explicitly contradicted or corrected
+  - Do not remove fields unless the new chunk indicates they are incorrect
+  - Expand arrays (e.g., symptoms, medications) with additional items when new information is available
+  - Update assessment and plan sections as new information emerges
+  - If the new chunk contains no new relevant information, return the previous JSON unchanged
+  - Follow the schema exactly and maintain valid JSON structure

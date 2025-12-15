@@ -41,7 +41,7 @@ def generate_medical_note_from_chunks(
     prompt_template: str,
     chunks: List[str],
     model: str,
-    update_instruction: str
+    update_note_instructions: str
 ) -> Dict[str, Any]:
     """
     Generate medical note from chunked transcript using Ollama LLM.
@@ -51,7 +51,7 @@ def generate_medical_note_from_chunks(
         prompt_template: The prompt template
         chunks: List of transcript chunks
         model: Ollama model to use
-        update_instruction: Instructions for updating the note with subsequent chunks
+        update_note_instructions: Instructions for updating the note with subsequent chunks
     
     Returns:
         Dictionary with generated note, timing information, and chunk details
@@ -69,7 +69,7 @@ def generate_medical_note_from_chunks(
         else:
             # Subsequent chunks: use template + previous note + current chunk
             full_prompt = (
-                f"{prompt_template}\n\n{update_instruction}\n\n"
+                f"{prompt_template}\n\n{update_note_instructions}\n\n"
                 f"Previously Generated Clinic Note:\n{current_note}\n\n"
                 f"New Conversation Chunk:\n{chunk}"
             )
@@ -162,7 +162,7 @@ def run_chunking_experiment(
     chunk_config_version = chunking_config['version']
     chunk_size = chunking_config['chunk_size']
     overlap = chunking_config['overlap']
-    update_instruction = chunking_config.get('update_instruction', '')
+    update_note_instructions = chunking_config.get('update_note_instructions', '').format(chunk_type="new conversation chunk")
     
     print(f"Chunking config: {chunk_config_name} v{chunk_config_version}")
     print(f"  Chunk size: {chunk_size} words")
@@ -189,10 +189,14 @@ def run_chunking_experiment(
     results_file = output_dir / "results.json"
     results = {
         'experiment_info': {
-            'name': prompt_name,
-            'version': prompt_version,
-            'chunking_config_name': chunk_config_name,
-            'chunking_config_version': chunk_config_version,
+            'note_prompt': {
+                'name': prompt_name,
+                'version': prompt_version
+            },
+            'chunking_prompt': {
+                'name': chunk_config_name,
+                'version': chunk_config_version
+            },
             'timestamp': timestamp,
             'models': models,
             'total_transcripts': len(df)
@@ -244,7 +248,7 @@ def run_chunking_experiment(
         for model in models:
             print(f"  Generating with {model}...")
             model_start_time = time.time()
-            result = generate_medical_note_from_chunks(prompt_template, chunks, model, update_instruction)
+            result = generate_medical_note_from_chunks(prompt_template, chunks, model, update_note_instructions)
             model_total_time = time.time() - model_start_time
             
             # Add total model time to result
