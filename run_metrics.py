@@ -240,7 +240,10 @@ def run_metrics(
 
 
 if __name__ == "__main__":
-    output_folder = "outputs/chunking/20251207_130615"
+    # output_folder = "outputs/baseline/20251203_195311" # Baseline
+    # output_folder = "outputs/chunking/20251207_130615" # Chunking
+    # output_folder = "outputs/reasoning/20251209_112109" # Reasoning
+    output_folder = "outputs/chunking_reasoning/20251213_101619" # Chunking + Reasoning
     
     run_metrics(output_folder)
 
